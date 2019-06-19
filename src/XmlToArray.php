@@ -57,15 +57,16 @@ class XmlToArray
 
     protected function convertDomElement(DOMElement $element)
     {
-        $sameNames = false;
         $result = $this->convertAttributes($element->attributes);
+        $childNodeNames = [];
 
         if ($element->childNodes->length > 1) {
-            $childNodeNames = [];
             foreach ($element->childNodes as $key => $node) {
-                $childNodeNames[] = $node->nodeName;
+                if (!isset($childNodeNames[$node->nodeName])) {
+                    $childNodeNames[$node->nodeName] = 0;
+                }
+                $childNodeNames[$node->nodeName] += 1;
             }
-            $sameNames = $this->isHomogenous($childNodeNames);
         }
 
         foreach ($element->childNodes as $key => $node) {
@@ -81,8 +82,8 @@ class XmlToArray
             }
             if ($node instanceof DOMElement) {
 
-                if ($sameNames) {
-                    $result[$node->nodeName][$key] = $this->convertDomElement($node);
+                if (isset($childNodeNames[$node->nodeName]) && $childNodeNames[$node->nodeName] > 1) {
+                    $result[$node->nodeName][] = $this->convertDomElement($node);
                 } else {
                     $result[$node->nodeName] = $this->convertDomElement($node);
                 }
